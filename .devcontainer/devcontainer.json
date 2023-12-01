@@ -1,0 +1,14 @@
+{
+  "image": "mcr.microsoft.com/devcontainers/base:bullseye",
+  "features": {},
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "EditorConfig.EditorConfig",
+        "Tyriar.sort-lines",
+        "timonwong.shellcheck"
+      ]
+    }
+  },
+  "onCreateCommand": "/bin/bash -i .devcontainer/onCreateCommand.sh"
+}
