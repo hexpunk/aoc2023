@@ -10,14 +10,53 @@ interface Token {
   value: number;
 }
 
+const WORD_NUMBER_PAIRS = [
+  ["one", 1],
+  ["two", 2],
+  ["three", 3],
+  ["four", 4],
+  ["five", 5],
+  ["six", 6],
+  ["seven", 7],
+  ["eight", 8],
+  ["nine", 9],
+] as const;
+
 function parse(input: string): Token[] {
   const tokens: Token[] = [];
+  let current = 0;
+
+  while (current < input.length) {
+    let token = consumeDigit(input, current) ?? consumeWord(input, current);
+
+    if (token !== null) {
+      tokens.push(token);
+    }
+
+    current++;
+  }
 
   return tokens;
 }
 
-function isDigit(str: string): boolean {
-  return str >= "0" && str <= "9";
+function consumeDigit(input: string, current: number): Token | null {
+  const char = input.charAt(current);
+
+  if (char >= "0" && char <= "9") {
+    return { type: TokenType.Literal, value: Number(char) };
+  }
+
+  return null;
+}
+
+function consumeWord(input: string, current: number): Token | null {
+  for (const [word, value] of WORD_NUMBER_PAIRS) {
+    if (input.substring(current, current + word.length) === word) {
+      return { type: TokenType.Word, value };
+    }
+  }
+
+  return null;
 }
 
 const rl = readline.createInterface({
@@ -25,35 +64,24 @@ const rl = readline.createInterface({
   terminal: false,
 });
 
-rl.on("line", (line) => {});
-
-rl.on("close", () => {});
-
-// --------------------------------
-
-const input = await Bun.stdin.text();
+let onlyDigitsTotal = 0;
 let total = 0;
 
-for (const line of input.split("\n")) {
-  let number = 0;
+rl.on("line", (line) => {
+  const tokens = parse(line);
 
-  for (let i = 0; i < line.length; i++) {
-    const value = Number(line[i]);
-    if (!isNaN(value)) {
-      number = value * 10;
-      break;
-    }
-  }
+  const firstDigit =
+    tokens.find((token) => token.type === TokenType.Literal)?.value ?? 0;
+  const lastDigit =
+    tokens.findLast((token) => token.type === TokenType.Literal)?.value ?? 0;
+  onlyDigitsTotal += firstDigit * 10;
+  onlyDigitsTotal += lastDigit;
 
-  for (let i = line.length - 1; i >= 0; i--) {
-    const value = Number(line[i]);
-    if (!isNaN(value)) {
-      number += value;
-      break;
-    }
-  }
+  total += (tokens[0].value ?? 0) * 10;
+  total += tokens[tokens.length - 1].value ?? 0;
+});
 
-  total += number;
-}
-
-console.log(`The total is ${total}.`);
+rl.on("close", () => {
+  console.log(`Part 1 total: ${onlyDigitsTotal}`);
+  console.log(`Part 2 total: ${total}`);
+});
