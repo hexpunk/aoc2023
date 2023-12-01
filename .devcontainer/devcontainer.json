@@ -4,10 +4,11 @@
   "customizations": {
     "vscode": {
       "extensions": [
-        "EditorConfig.EditorConfig",
-        "Tyriar.sort-lines",
-        "timonwong.shellcheck"
-      ]
+		"EditorConfig.EditorConfig",
+		"Tyriar.sort-lines",
+		"timonwong.shellcheck",
+		"esbenp.prettier-vscode"
+	]
     }
   },
   "onCreateCommand": "/bin/bash -i .devcontainer/onCreateCommand.sh"
