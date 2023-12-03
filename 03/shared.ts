@@ -73,7 +73,7 @@ export function hasAdjacentSymbol(
     } else {
       if (
         symbol.column >= part.column - 1 &&
-        symbol.column <= part.column + part.partNumber.length + 1
+        symbol.column <= part.column + part.partNumber.length
       ) {
         return true;
       }

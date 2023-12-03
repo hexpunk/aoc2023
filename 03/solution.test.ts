@@ -58,13 +58,19 @@ describe("hasAdjacentSymbol", () => {
 
   test("diagonal", () => {
     expect(hasAdjacentSymbol(part, [{ line: 3, column: 2 }])).toBeTrue();
-    expect(hasAdjacentSymbol(part, [{ line: 3, column: 7 }])).toBeTrue();
+    expect(hasAdjacentSymbol(part, [{ line: 3, column: 6 }])).toBeTrue();
     expect(hasAdjacentSymbol(part, [{ line: 5, column: 2 }])).toBeTrue();
-    expect(hasAdjacentSymbol(part, [{ line: 5, column: 7 }])).toBeTrue();
+    expect(hasAdjacentSymbol(part, [{ line: 5, column: 6 }])).toBeTrue();
 
     expect(hasAdjacentSymbol(part, [{ line: 3, column: 1 }])).toBeFalse();
-    expect(hasAdjacentSymbol(part, [{ line: 3, column: 8 }])).toBeFalse();
+    expect(hasAdjacentSymbol(part, [{ line: 3, column: 7 }])).toBeFalse();
     expect(hasAdjacentSymbol(part, [{ line: 5, column: 1 }])).toBeFalse();
-    expect(hasAdjacentSymbol(part, [{ line: 5, column: 8 }])).toBeFalse();
+    expect(hasAdjacentSymbol(part, [{ line: 5, column: 7 }])).toBeFalse();
+
+    expect(
+      hasAdjacentSymbol({ line: 1, column: 75, partNumber: "900" }, [
+        { line: 2, column: 79 },
+      ])
+    ).toBeFalse();
   });
 });

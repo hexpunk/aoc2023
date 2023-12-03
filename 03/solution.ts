@@ -18,12 +18,17 @@ rl.on("line", (line) => {
 });
 
 rl.on("close", () => {
-  let partNumberTotal = 0;
+  const partNumbers = new Set<number>();
   for (const part of allParts) {
+    console.log(part.partNumber, hasAdjacentSymbol(part, allSymbols));
     if (hasAdjacentSymbol(part, allSymbols)) {
-      partNumberTotal += Number(part.partNumber);
+      partNumbers.add(Number(part.partNumber));
     }
   }
+
+  const partNumberTotal = Array.of(...partNumbers.values()).reduce(
+    (total, num) => total + num
+  );
 
   console.log(`Part 1 total: ${partNumberTotal}`);
 });
