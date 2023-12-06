@@ -5,7 +5,7 @@ interface Race {
   distance: number;
 }
 
-function parse(input: string[]): Race[] {
+function parseRaces(input: string[]): Race[] {
   const times = input[0]
     .substring("Time:".length)
     .trim()
@@ -22,6 +22,14 @@ function parse(input: string[]): Race[] {
     time: Number(time),
     distance: Number(distances[i]),
   }));
+}
+
+function parseRace(input: string[]): Race {
+  const time = input[0].substring("Time:".length).replaceAll(" ", "");
+
+  const distance = input[1].substring("Distance:".length).replaceAll(" ", "");
+
+  return { time: Number(time), distance: Number(distance) };
 }
 
 function countWinningStrategies(race: Race): number {
@@ -49,11 +57,15 @@ rl.on("line", (line) => {
 });
 
 rl.on("close", () => {
-  const races = parse(lines);
+  const races = parseRaces(lines);
 
   const part1Answer = races
     .map(countWinningStrategies)
     .reduce((total, num) => total * num);
 
   console.log(`Part 1 answer: ${part1Answer}`);
+
+  const race = parseRace(lines);
+
+  console.log(`Part 2 answer: ${countWinningStrategies(race)}`);
 });
