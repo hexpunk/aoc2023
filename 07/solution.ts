@@ -15,31 +15,45 @@ type Cards = [string, string, string, string, string];
 interface Hand {
   cards: Cards;
   bid: number;
-  type: HandType;
-
-  // For debugging purposes:
-  line: number;
+  typePart1: HandType;
+  typePart2: HandType;
 }
 
-function compareCards(a: string, b: string): number {
-  const lowestToHighest = [
-    "2",
-    "3",
-    "4",
-    "5",
-    "6",
-    "7",
-    "8",
-    "9",
-    "T",
-    "J",
-    "Q",
-    "K",
-    "A",
-  ];
+const priorityPart1 = [
+  "2",
+  "3",
+  "4",
+  "5",
+  "6",
+  "7",
+  "8",
+  "9",
+  "T",
+  "J",
+  "Q",
+  "K",
+  "A",
+];
 
-  const i = lowestToHighest.indexOf(a);
-  const j = lowestToHighest.indexOf(b);
+const priorityPart2 = [
+  "J",
+  "2",
+  "3",
+  "4",
+  "5",
+  "6",
+  "7",
+  "8",
+  "9",
+  "T",
+  "Q",
+  "K",
+  "A",
+];
+
+function compareCards(priority: string[], a: string, b: string): number {
+  const i = priority.indexOf(a);
+  const j = priority.indexOf(b);
 
   if (i > j) {
     return -1;
@@ -50,8 +64,10 @@ function compareCards(a: string, b: string): number {
   }
 }
 
-function cardsToType(cards: Cards): HandType {
-  const [a, b, c, d, e] = cards.toSorted(compareCards);
+function cardsToTypePart1(cards: Cards): HandType {
+  const [a, b, c, d, e] = cards.toSorted(
+    compareCards.bind(null, priorityPart1)
+  );
 
   if (a === b && b === c && c === d && d === e) {
     return HandType.FiveOfAKind;
@@ -80,29 +96,48 @@ function cardsToType(cards: Cards): HandType {
   return HandType.HighCard;
 }
 
-function parseHand(line: number, input: string): Hand {
+function cardsToTypePart2(cards: Cards): HandType {
+  if (!cards.some((card) => card === "J")) {
+    return cardsToTypePart1(cards);
+  }
+
+  return Math.max(
+    ...priorityPart2.map((card) =>
+      cardsToTypePart1(
+        cards.map((original) => (original === "J" ? card : original)) as Cards
+      )
+    )
+  );
+}
+
+function parseHand(input: string): Hand {
   const [rawCards, rawBid] = input.split(" ");
   const cards = rawCards.split("") as Cards;
 
   return {
     cards,
     bid: Number(rawBid),
-    type: cardsToType(cards),
-    line,
+    typePart1: cardsToTypePart1(cards),
+    typePart2: cardsToTypePart2(cards),
   };
 }
 
-function compareHands(a: Hand, b: Hand): number {
-  if (a.type > b.type) {
+function compareHands(
+  priority: string[],
+  type: "typePart1" | "typePart2",
+  a: Hand,
+  b: Hand
+): number {
+  if (a[type] > b[type]) {
     return -1;
   }
 
-  if (b.type > a.type) {
+  if (b[type] > a[type]) {
     return 1;
   }
 
   for (let i = 0; i < 5; i++) {
-    const result = compareCards(a.cards[i], b.cards[i]);
+    const result = compareCards(priority, a.cards[i], b.cards[i]);
 
     if (result !== 0) {
       return result;
@@ -118,14 +153,13 @@ const rl = readline.createInterface({
 });
 
 const hands: Hand[] = [];
-let lineNumber = 1;
 rl.on("line", (line) => {
-  hands.push(parseHand(lineNumber, line));
-  lineNumber++;
+  hands.push(parseHand(line));
 });
 
 rl.on("close", () => {
-  hands.sort(compareHands);
+  let compare = compareHands.bind(null, priorityPart1, "typePart1");
+  hands.sort(compare);
 
   let winnings = 0;
   for (let i = 0; i < hands.length; i++) {
@@ -133,4 +167,14 @@ rl.on("close", () => {
   }
 
   console.log(`Part 1 total winnings: ${winnings}`);
+
+  compare = compareHands.bind(null, priorityPart2, "typePart2");
+  hands.sort(compare);
+
+  winnings = 0;
+  for (let i = 0; i < hands.length; i++) {
+    winnings += hands[i].bid * (hands.length - i);
+  }
+
+  console.log(`Part 2 total winnings: ${winnings}`);
 });
