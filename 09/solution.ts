@@ -5,7 +5,8 @@ const rl = readline.createInterface({
   terminal: false,
 });
 
-let sum = 0;
+let sum1 = 0;
+let sum2 = 0;
 rl.on("line", (line) => {
   const history = [line.split(" ").map(Number)];
 
@@ -25,11 +26,14 @@ rl.on("line", (line) => {
     const next = history[i - 1];
 
     next.push(next[next.length - 1] + current[current.length - 1]);
+    next.unshift(next[0] - current[0]);
   }
 
-  sum += history[0][history[0].length - 1];
+  sum1 += history[0][history[0].length - 1];
+  sum2 += history[0][0];
 });
 
 rl.on("close", () => {
-  console.log(`Part 1 sum: ${sum}`);
+  console.log(`Part 1 sum: ${sum1}`);
+  console.log(`Part 2 sum: ${sum2}`);
 });
