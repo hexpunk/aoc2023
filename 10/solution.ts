@@ -62,6 +62,10 @@ function getConnectingCoords([line, column]: [number, number]): Array<
   return connections;
 }
 
+function coordToString([line, column]: [number, number]): string {
+  return `${line},${column}`;
+}
+
 const rl = readline.createInterface({
   input: process.stdin,
   terminal: false,
@@ -78,6 +82,7 @@ rl.on("line", (line) => {
 
 rl.on("close", () => {
   let steps = 1;
+  const cache = new Set([coordToString(start!)]);
   const visited: Pipe[] = [{ coord: start!, steps: 0 }];
   let nextLocations: Array<[number, number]> = [start!];
 
@@ -87,11 +92,8 @@ rl.on("close", () => {
 
     for (const location of prevLocations) {
       for (const next of getConnectingCoords(location)) {
-        if (
-          !visited.some(
-            (pipe) => pipe.coord[0] === next[0] && pipe.coord[1] === next[1]
-          )
-        ) {
+        if (!cache.has(coordToString(next))) {
+          cache.add(coordToString(next));
           visited.push({ coord: next, steps });
           nextLocations.push(next);
         }
