@@ -25,7 +25,7 @@ function getConnectingCoords([line, column]: [number, number]): Array<
 
   // Connects north?
   if (connectsNorth.includes(here)) {
-    const north = grid[line - 1][column];
+    const north = grid[line - 1]?.[column];
     // Connects south?
     if (connectsSouth.includes(north)) {
       connections.push([line - 1, column]);
@@ -34,7 +34,7 @@ function getConnectingCoords([line, column]: [number, number]): Array<
 
   // Connects east?
   if (connectsEast.includes(here)) {
-    const east = grid[line][column + 1];
+    const east = grid[line]?.[column + 1];
     // Connects west?
     if (connectsWest.includes(east)) {
       connections.push([line, column + 1]);
@@ -43,7 +43,7 @@ function getConnectingCoords([line, column]: [number, number]): Array<
 
   // Connects south?
   if (connectsSouth.includes(here)) {
-    const south = grid[line + 1][column];
+    const south = grid[line + 1]?.[column];
     // Connects north?
     if (connectsNorth.includes(south)) {
       connections.push([line + 1, column]);
@@ -52,7 +52,7 @@ function getConnectingCoords([line, column]: [number, number]): Array<
 
   // Connects west?
   if (connectsWest.includes(here)) {
-    const west = grid[line][column - 1];
+    const west = grid[line]?.[column - 1];
     // Connects east?
     if (connectsEast.includes(west)) {
       connections.push([line, column - 1]);
@@ -107,61 +107,25 @@ rl.on("close", () => {
 
   console.log(`Part 1 furthest pipe: ${maxSteps} steps`);
 
-  /*
-   * For Part 2, I'm going to try to figure out which positions are inside the loop
-   * by counting the number of border characters left and above a given spot. If the
-   * number of borders are odd, we're inside the loop. The possible exception to this
-   * is if multiple border spaces are contiguous. Contiguous border spaces should
-   * only count as one border.
-   *
-   * ┌───────────┐
-   * │ A         │ B
-   * │  ┌────────┘
-   * │  │    C
-   * │  └───┐
-   * │    D │
-   * └──────┘
-   *
-   * In this example, A has 1 border to the left and 1 border above.
-   * B has 2 borders to the left and 0 borders above.
-   * C has 2 borders to the left and 2 borders above.
-   * D has 1 border to the left and 3 borders above.
-   */
-
-  const printChars: { [key: string]: string } = {
-    "|": "│",
-    "-": "─",
-    F: "┌",
-    J: "┘",
-    "7": "┐",
-    L: "└",
-    S: "S",
-  };
-
-  // Number of border spaces seen per column
-  const columnBorderCount = new Array<number>(grid[0].length).fill(0);
   let rowBorderCount = 0;
   let innerCount = 0;
 
   for (let i = 0; i < grid.length; i++) {
     rowBorderCount = 0;
 
-    let printLine = "";
     const line = grid[i];
     for (let j = 0; j < line.length; j++) {
       if (cache.has(coordToString([i, j]))) {
-        rowBorderCount++;
-        columnBorderCount[j]++;
-        printLine += printChars[grid[i][j]];
+        if (connectsNorth.includes(grid[i][j])) {
+          rowBorderCount++;
+        }
       } else {
-        if (rowBorderCount % 2 === 1 && columnBorderCount[j] % 2 === 1) {
+        if (rowBorderCount % 2 === 1) {
           innerCount++;
-          printLine += "I";
-        } else {
-          printLine += "O";
         }
       }
     }
-    console.log(printLine);
   }
+
+  console.log(`Part 2 inner spaces: ${innerCount}`);
 });
