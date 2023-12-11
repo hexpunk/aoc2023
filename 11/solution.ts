@@ -4,6 +4,39 @@ const grid: string[][] = [];
 // [line, column], both 0-indexed
 const galaxies: [number, number][] = [];
 
+function expand(factor: number): [number, number][] {
+  const copy = galaxies.map(([i, j]) => [i, j] as [number, number]);
+
+  // Vertical expansion
+  for (let i = 0; i < grid.length; i++) {
+    if (grid[i].every((x) => x === ".")) {
+      for (let g = 0; g < galaxies.length; g++) {
+        if (galaxies[g][0] > i) {
+          copy[g][0] += factor - 1;
+        }
+      }
+    }
+  }
+
+  // Horizontal expansion
+  for (let j = 0; j < grid[0].length; j++) {
+    const column = [];
+    for (let i = 0; i < grid.length; i++) {
+      column.push(grid[i][j]);
+    }
+
+    if (column.every((x) => x === ".")) {
+      for (let g = 0; g < galaxies.length; g++) {
+        if (galaxies[g][1] > j) {
+          copy[g][1] += factor - 1;
+        }
+      }
+    }
+  }
+
+  return copy;
+}
+
 function distance(
   [x1, y1]: [number, number],
   [x2, y2]: [number, number]
@@ -45,30 +78,6 @@ rl.on("line", (line) => {
 });
 
 rl.on("close", () => {
-  // Vertical expansion
-  for (let i = 0; i < grid.length; i++) {
-    if (grid[i].every((x) => x === ".")) {
-      grid.splice(i, 0, [...grid[i]]);
-      i++;
-    }
-  }
-
-  //Horizontal expansion
-  for (let j = 0; j < grid[0].length; j++) {
-    const column = [];
-    for (let i = 0; i < grid.length; i++) {
-      column.push(grid[i][j]);
-    }
-
-    if (column.every((x) => x === ".")) {
-      for (let i = 0; i < grid.length; i++) {
-        grid[i].splice(j, 0, ".");
-      }
-
-      j++;
-    }
-  }
-
   // Index galaxies
   for (let i = 0; i < grid.length; i++) {
     for (let j = 0; j < grid[i].length; j++) {
@@ -78,11 +87,13 @@ rl.on("close", () => {
     }
   }
 
-  const pairs = pairUp(galaxies);
-  const distanceSum = pairs.reduce(
-    (total, [i, j]) => total + distance(i, j),
-    0
-  );
+  let pairs = pairUp(expand(2));
+  let distanceSum = pairs.reduce((total, [i, j]) => total + distance(i, j), 0);
 
   console.log(`Part 1 distance sum: ${distanceSum}`);
+
+  pairs = pairUp(expand(1_000_000));
+  distanceSum = pairs.reduce((total, [i, j]) => total + distance(i, j), 0);
+
+  console.log(`Part 2 distance sum: ${distanceSum}`);
 });
