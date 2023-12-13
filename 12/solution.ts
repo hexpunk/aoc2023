@@ -1,102 +1,46 @@
 import readline from "readline";
 
+function countSolutions(puzzle: string, runs: number[]): number {
+  if (puzzle === "") {
+    if (runs.length === 0) {
+      return 1;
+    } else {
+      return 0;
+    }
+  }
+
+  if (runs.length === 0) {
+    if (puzzle.indexOf("#") === -1) {
+      return 1;
+    } else {
+      return 0;
+    }
+  }
+
+  const [first, ...rest] = runs;
+  let subtotal = 0;
+
+  if (puzzle[0] === "." || puzzle[0] === "?") {
+    subtotal += countSolutions(puzzle.substring(1), runs);
+  }
+
+  if (puzzle[0] === "#" || puzzle[0] === "?") {
+    if (
+      first <= puzzle.length &&
+      puzzle.substring(0, first).indexOf(".") === -1 &&
+      (first === puzzle.length || puzzle[first] !== "#")
+    ) {
+      subtotal += countSolutions(puzzle.substring(first + 1), rest);
+    }
+  }
+
+  return subtotal;
+}
+
 const rl = readline.createInterface({
   input: process.stdin,
   terminal: false,
 });
-
-function swap(arr: string[], i: number, j: number): void {
-  const iVal = arr[i];
-  const jVal = arr[j];
-
-  arr[i] = jVal;
-  arr[j] = iVal;
-}
-
-// Heap's algorithm
-function* permutations(input: string): Generator<string> {
-  const workingCopy = input.split("");
-  const stack = new Array(input.length).fill(0);
-
-  const cache = new Set<string>();
-  cache.add(input);
-  yield input;
-
-  let i = 1;
-  while (i < input.length) {
-    if (stack[i] < i) {
-      if (i % 2 === 0) {
-        swap(workingCopy, 0, i);
-      } else {
-        swap(workingCopy, stack[i], i);
-      }
-
-      const combo = workingCopy.join("");
-      if (!cache.has(combo)) {
-        cache.add(combo);
-        yield combo;
-      }
-
-      stack[i]++;
-      i = 1;
-    } else {
-      stack[i] = 0;
-      i++;
-    }
-  }
-}
-
-function createTest(counts: number[]): (puzzle: string) => boolean {
-  return (puzzle) =>
-    new RegExp(
-      "^\\.*" + counts.map((n) => `#{${n}}`).join("\\.+") + "\\.*$"
-    ).test(puzzle);
-}
-
-function fillIn(puzzle: string, bag: string): string {
-  let result = "";
-
-  for (const c of puzzle.split("")) {
-    if (c === "?") {
-      result += bag.charAt(0);
-      bag = bag.slice(1);
-    } else {
-      result += c;
-    }
-  }
-
-  return result;
-}
-
-function countSolutions(puzzle: string, counts: number[]): number {
-  let count = 0;
-
-  const test = createTest(counts);
-  const split = puzzle.split("");
-  const missing =
-    counts.reduce((total, n) => total + n) -
-    split.filter((c) => c === "#").length;
-  const empty = split.filter((c) => c === "?").length;
-  const possibilities = [
-    ...new Array(missing).fill("#"),
-    ...new Array(empty - missing).fill("."),
-  ].join("");
-
-  const it = permutations(possibilities);
-
-  let result = it.next();
-  while (!result.done) {
-    const attempt = fillIn(puzzle, result.value);
-
-    if (test(attempt)) {
-      count++;
-    }
-
-    result = it.next();
-  }
-
-  return count;
-}
 
 let sum = 0;
 let count = 0;
