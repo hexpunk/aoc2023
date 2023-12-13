@@ -5,33 +5,36 @@ const rl = readline.createInterface({
   terminal: false,
 });
 
-function swap(str: string, i: number, j: number) {
-  const arr = str.split("");
-  arr[j] = str.charAt(i);
-  arr[i] = str.charAt(j);
+function swap(arr: string[], i: number, j: number): void {
+  const iVal = arr[i];
+  const jVal = arr[j];
 
-  return arr.join("");
+  arr[i] = jVal;
+  arr[j] = iVal;
 }
 
 // Heap's algorithm
 function* permutations(input: string): Generator<string> {
+  const workingCopy = input.split("");
   const stack = new Array(input.length).fill(0);
 
-  const cache = new Set<string>([input]);
+  const cache = new Set<string>();
+  cache.add(input);
   yield input;
 
   let i = 1;
   while (i < input.length) {
     if (stack[i] < i) {
       if (i % 2 === 0) {
-        input = swap(input, 0, i);
+        swap(workingCopy, 0, i);
       } else {
-        input = swap(input, stack[i], i);
+        swap(workingCopy, stack[i], i);
       }
 
-      if (!cache.has(input)) {
-        cache.add(input);
-        yield input;
+      const combo = workingCopy.join("");
+      if (!cache.has(combo)) {
+        cache.add(combo);
+        yield combo;
       }
 
       stack[i]++;
@@ -96,8 +99,11 @@ function countSolutions(puzzle: string, counts: number[]): number {
 }
 
 let sum = 0;
+let count = 0;
 
 rl.on("line", (line) => {
+  count++;
+  console.log(`Running on line ${count}`);
   const [puzzle, rawNumbers] = line.split(" ");
 
   sum += countSolutions(puzzle, rawNumbers.split(",").map(Number));
