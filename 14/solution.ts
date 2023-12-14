@@ -1,8 +1,7 @@
 import readline from "readline";
 
 interface Platform {
-  data: string;
-  rowLength: number;
+  data: string[][];
 }
 
 enum Values {
@@ -19,38 +18,25 @@ enum Directions {
 }
 
 function rows(input: Platform): number {
-  return input.rowLength;
+  return input.data.length;
 }
 
 function columns(input: Platform): number {
-  return input.data.length / rows(input);
+  return input.data[0].length;
 }
 
 function get(input: Platform, row: number, column: number): string {
-  return input.data[row * rows(input) + column];
+  return input.data[row][column];
 }
 
-function set(
-  input: Platform,
-  row: number,
-  column: number,
-  char: string
-): Platform {
-  const output = { ...input };
-
-  const i = row * rows(output) + column;
-  output.data =
-    output.data.slice(0, i) + char + output.data.slice(i + char.length);
-
-  return output;
+function set(input: Platform, row: number, column: number, char: string) {
+  input.data[row][column] = char;
 }
 
 // moves O characters as far left as they can go until they hit the end or # or another O
-function gravity(input: Platform, direction: Directions): Platform {
-  let output = { ...input };
-
-  const numRows = rows(output);
-  const numCols = columns(output);
+function gravity(input: Platform, direction: Directions) {
+  const numRows = rows(input);
+  const numCols = columns(input);
 
   if (direction === Directions.North) {
     // Move O ^ until it hits # or O
@@ -58,12 +44,12 @@ function gravity(input: Platform, direction: Directions): Platform {
       let row = 0;
       // numRows - 1 because it's evaluating pairs
       while (row < numRows - 1) {
-        const one = get(output, row, col);
-        const two = get(output, row + 1, col);
+        const one = get(input, row, col);
+        const two = get(input, row + 1, col);
 
         if (one === Values.Empty && two === Values.RoundRock) {
-          output = set(output, row, col, Values.RoundRock);
-          output = set(output, row + 1, col, Values.Empty);
+          set(input, row, col, Values.RoundRock);
+          set(input, row + 1, col, Values.Empty);
 
           row = 0;
         } else {
@@ -77,12 +63,12 @@ function gravity(input: Platform, direction: Directions): Platform {
       let col = 0;
       // numCols - 1 because it's evaluting pairs
       while (col < numCols - 1) {
-        const one = get(output, row, col);
-        const two = get(output, row, col + 1);
+        const one = get(input, row, col);
+        const two = get(input, row, col + 1);
 
         if (one === Values.Empty && two === Values.RoundRock) {
-          output = set(output, row, col, Values.RoundRock);
-          output = set(output, row, col + 1, Values.Empty);
+          set(input, row, col, Values.RoundRock);
+          set(input, row, col + 1, Values.Empty);
 
           col = 0;
         } else {
@@ -96,12 +82,12 @@ function gravity(input: Platform, direction: Directions): Platform {
       let row = numRows - 1;
       // Stop BEFORE 0 because we're evaluating pairs
       while (row > 0) {
-        const one = get(output, row, col);
-        const two = get(output, row - 1, col);
+        const one = get(input, row, col);
+        const two = get(input, row - 1, col);
 
         if (one === Values.Empty && two === Values.RoundRock) {
-          output = set(output, row, col, Values.RoundRock);
-          output = set(output, row - 1, col, Values.Empty);
+          set(input, row, col, Values.RoundRock);
+          set(input, row - 1, col, Values.Empty);
 
           row = numRows - 1;
         } else {
@@ -115,12 +101,12 @@ function gravity(input: Platform, direction: Directions): Platform {
       let col = numCols - 1;
       // Stop BEFORE 0 because we're evaluating pairs
       while (col > 0) {
-        const one = get(output, row, col);
-        const two = get(output, row, col - 1);
+        const one = get(input, row, col);
+        const two = get(input, row, col - 1);
 
         if (one === Values.Empty && two === Values.RoundRock) {
-          output = set(output, row, col, Values.RoundRock);
-          output = set(output, row, col - 1, Values.Empty);
+          set(input, row, col, Values.RoundRock);
+          set(input, row, col - 1, Values.Empty);
 
           col = numCols - 1;
         } else {
@@ -129,17 +115,13 @@ function gravity(input: Platform, direction: Directions): Platform {
       }
     }
   }
-
-  return output;
 }
 
-function cycle(input: Platform): Platform {
-  const north = gravity(input, Directions.North);
-  const west = gravity(north, Directions.West);
-  const south = gravity(west, Directions.South);
-  const east = gravity(south, Directions.East);
-
-  return east;
+function cycle(input: Platform) {
+  gravity(input, Directions.North);
+  gravity(input, Directions.West);
+  gravity(input, Directions.South);
+  gravity(input, Directions.East);
 }
 
 function northLoad(input: Platform): number {
@@ -157,7 +139,8 @@ function northLoad(input: Platform): number {
   return total;
 }
 
-const input: Platform = { data: "", rowLength: 0 };
+const input1: Platform = { data: [] };
+const input2: Platform = { data: [] };
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -165,25 +148,25 @@ const rl = readline.createInterface({
 });
 
 rl.on("line", (line) => {
-  input.data += line;
-  input.rowLength = line.length;
+  input1.data.push(line.split(""));
+  input2.data.push(line.split(""));
 });
 
 rl.on("close", () => {
-  let totalLoad = northLoad(gravity(input, Directions.North));
+  gravity(input1, Directions.North);
+  let totalLoad = northLoad(input1);
 
   console.log(`Part 1 total load: ${totalLoad}`);
 
-  let cycled = input;
   for (let i = 0; i < 1_000_000_000; i++) {
-    if (i % 10_000 === 0) {
-      console.log(`Doing cycle ${i}`);
+    if (i % 1_000_000 === 0) {
+      console.log(`${i / 1_000_000_000}% done...`);
     }
 
-    cycled = cycle(cycled);
+    cycle(input2);
   }
 
-  totalLoad = northLoad(cycled);
+  totalLoad = northLoad(input2);
 
   console.log(`Part 2 total load: ${totalLoad}`);
 });
