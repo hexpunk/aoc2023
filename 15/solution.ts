@@ -1,5 +1,10 @@
 import readline from "readline";
 
+interface Lens {
+  label: string;
+  focal: number;
+}
+
 function hash(input: string): number {
   let currentValue = 0;
 
@@ -24,7 +29,43 @@ rl.on("line", (line) => {
 });
 
 rl.on("close", () => {
-  const hashSum = input.split(",").reduce((total, str) => total + hash(str), 0);
+  const instructions = input.split(",");
+  const hashSum = instructions.reduce((total, str) => total + hash(str), 0);
 
   console.log(`Part 1 hash sum: ${hashSum}`);
+
+  const boxes: Lens[][] = [];
+  for (let i = 0; i < 256; i++) {
+    boxes.push([]);
+  }
+
+  for (const instruction of instructions) {
+    const [label, focal] = instruction.split(/\=|\-/);
+    const boxId = hash(label);
+
+    if (focal === "") {
+      boxes[boxId] = boxes[boxId].filter((lens) => lens.label !== label);
+    } else {
+      const index = boxes[boxId].findIndex((lens) => lens.label === label);
+
+      if (index === -1) {
+        boxes[boxId].push({ label, focal: Number(focal) });
+      } else {
+        boxes[boxId][index].focal = Number(focal);
+      }
+    }
+  }
+
+  const power = boxes.reduce(
+    (total, box, boxNumber) =>
+      total +
+      box.reduce(
+        (boxTotal, lens, slotNumber) =>
+          boxTotal + (1 + boxNumber) * (1 + slotNumber) * lens.focal,
+        0
+      ),
+    0
+  );
+
+  console.log(`Part 2 focus power: ${power}`);
 });
