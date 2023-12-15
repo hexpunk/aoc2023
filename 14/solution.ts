@@ -58,39 +58,23 @@ function cycle(input: string[]): string[] {
   return final;
 }
 
-function load(input: string): number {
-  return input
-    .split("")
-    .reverse()
-    .reduce((total, char, i) => (char === "O" ? total + i + 1 : total), 0);
+function cycleN1(input: string[], rounds: number): string[] {
+  let cycled = input;
+
+  for (let i = 0; i < rounds; i++) {
+    cycled = cycle(cycled);
+  }
+
+  return cycled;
 }
 
-const rl = readline.createInterface({
-  input: process.stdin,
-  terminal: false,
-});
-
-rl.on("line", (line) => {
-  rowLength = line.length;
-  data += line;
-});
-
-rl.on("close", () => {
-  let totalLoad = toColumns().reduce(
-    (total, col) => total + load(gravity(col)),
-    0
-  );
-
-  console.log(`Part 1 total load: ${totalLoad}`);
-
-  let cycled = toColumns();
-
+function cycleN2(input: string[], rounds: number): string[] {
+  let cycled = input;
   const nodes: string[] = [];
   const edges = new Map<number, number>();
 
-  const loops = 1_000_000_000;
   let i = 0;
-  while (i < loops) {
+  while (i < rounds) {
     const beforeNode = String(cycled);
     let beforeId = nodes.indexOf(beforeNode);
     if (beforeId === -1) {
@@ -117,11 +101,41 @@ rl.on("close", () => {
   }
 
   const loopsEvery = edges.size - edges.get(edges.size - 1)!;
-  const remaining = loops - i - 1;
+  const remaining = rounds - (i + 1);
 
   for (let i = 0; i < remaining % loopsEvery; i++) {
     cycled = cycle(cycled);
   }
+
+  return cycled;
+}
+
+function load(input: string): number {
+  return input
+    .split("")
+    .reverse()
+    .reduce((total, char, i) => (char === "O" ? total + i + 1 : total), 0);
+}
+
+const rl = readline.createInterface({
+  input: process.stdin,
+  terminal: false,
+});
+
+rl.on("line", (line) => {
+  rowLength = line.length;
+  data += line;
+});
+
+rl.on("close", () => {
+  let totalLoad = toColumns().reduce(
+    (total, col) => total + load(gravity(col)),
+    0
+  );
+
+  console.log(`Part 1 total load: ${totalLoad}`);
+
+  const cycled = cycleN2(toColumns(), 1_000_000_000);
 
   totalLoad = cycled.reduce((total, col) => total + load(col), 0);
 
