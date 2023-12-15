@@ -1,146 +1,69 @@
 import readline from "readline";
 
-interface Platform {
-  data: string[][];
+let data = "";
+let rowLength = 0;
+
+// rotates 90 degrees counter-clockwise
+// <- North
+function toColumns(): string[] {
+  const result = new Array(rowLength).fill("");
+
+  for (let i = 0; i < data.length; i++) {
+    const index = rowLength - 1 - (i % rowLength);
+
+    result[index] = result[index] + data[i];
+  }
+
+  return result;
 }
 
-enum Values {
-  RoundRock = "O",
-  FlatRock = "#",
-  Empty = ".",
+// rotates 90 degrees clockwise
+function rotate(input: string[]): string[] {
+  const output = new Array(input[0].length).fill("");
+
+  for (let col = 0; col < input[0].length; col++) {
+    for (let row = 0; row < input.length; row++) {
+      output[col] = input[row][col] + output[col];
+    }
+  }
+
+  return output;
 }
 
-enum Directions {
-  North = 0,
-  West = 1,
-  South = 2,
-  East = 3,
-}
-
-function rows(input: Platform): number {
-  return input.data.length;
-}
-
-function columns(input: Platform): number {
-  return input.data[0].length;
-}
-
-function get(input: Platform, row: number, column: number): string {
-  return input.data[row][column];
-}
-
-function set(input: Platform, row: number, column: number, char: string) {
-  input.data[row][column] = char;
-}
-
+const gravityCache = new Map<string, string>();
 // moves O characters as far left as they can go until they hit the end or # or another O
-function gravity(input: Platform, direction: Directions) {
-  const numRows = rows(input);
-  const numCols = columns(input);
-
-  if (direction === Directions.North) {
-    // Move O ^ until it hits # or O
-    for (let col = 0; col < numCols; col++) {
-      let row = 0;
-      // numRows - 1 because it's evaluating pairs
-      while (row < numRows - 1) {
-        const one = get(input, row, col);
-        const two = get(input, row + 1, col);
-
-        if (one === Values.Empty && two === Values.RoundRock) {
-          set(input, row, col, Values.RoundRock);
-          set(input, row + 1, col, Values.Empty);
-
-          row = 0;
-        } else {
-          row++;
-        }
-      }
-    }
-  } else if (direction === Directions.West) {
-    // Move O <- until it hits # or O
-    for (let row = 0; row < numRows; row++) {
-      let col = 0;
-      // numCols - 1 because it's evaluting pairs
-      while (col < numCols - 1) {
-        const one = get(input, row, col);
-        const two = get(input, row, col + 1);
-
-        if (one === Values.Empty && two === Values.RoundRock) {
-          set(input, row, col, Values.RoundRock);
-          set(input, row, col + 1, Values.Empty);
-
-          col = 0;
-        } else {
-          col++;
-        }
-      }
-    }
-  } else if (direction === Directions.South) {
-    // Move O v until it hits # or O
-    for (let col = 0; col < numCols; col++) {
-      let row = numRows - 1;
-      // Stop BEFORE 0 because we're evaluating pairs
-      while (row > 0) {
-        const one = get(input, row, col);
-        const two = get(input, row - 1, col);
-
-        if (one === Values.Empty && two === Values.RoundRock) {
-          set(input, row, col, Values.RoundRock);
-          set(input, row - 1, col, Values.Empty);
-
-          row = numRows - 1;
-        } else {
-          row--;
-        }
-      }
-    }
-  } else if (direction === Directions.East) {
-    // Move O -> until it hits # or O
-    for (let row = 0; row < numRows; row++) {
-      let col = numCols - 1;
-      // Stop BEFORE 0 because we're evaluating pairs
-      while (col > 0) {
-        const one = get(input, row, col);
-        const two = get(input, row, col - 1);
-
-        if (one === Values.Empty && two === Values.RoundRock) {
-          set(input, row, col, Values.RoundRock);
-          set(input, row, col - 1, Values.Empty);
-
-          col = numCols - 1;
-        } else {
-          col--;
-        }
-      }
-    }
-  }
-}
-
-function cycle(input: Platform) {
-  gravity(input, Directions.North);
-  gravity(input, Directions.West);
-  gravity(input, Directions.South);
-  gravity(input, Directions.East);
-}
-
-function northLoad(input: Platform): number {
-  const numRows = rows(input);
-  let total = 0;
-
-  for (let col = 0; col < columns(input); col++) {
-    for (let row = 0; row < numRows; row++) {
-      if (get(input, row, col) === Values.RoundRock) {
-        total += numRows - row;
-      }
-    }
+function gravity(input: string): string {
+  if (gravityCache.has(input)) {
+    return gravityCache.get(input)!;
   }
 
-  return total;
+  let output = input;
+  let i = -1;
+  while ((i = output.indexOf(".O")) !== -1) {
+    output = output.slice(0, i) + "O." + output.slice(i + 2);
+  }
+
+  gravityCache.set(input, output);
+
+  return output;
 }
 
-const input1: Platform = { data: [] };
-const input2: Platform = { data: [] };
+function cycle(input: string[]): string[] {
+  const north = input.map(gravity);
+  const west = rotate(north).map(gravity);
+  const south = rotate(west).map(gravity);
+  const east = rotate(south).map(gravity);
+  const final = rotate(east);
+
+  return final;
+}
+
+function load(input: string): number {
+  return input
+    .split("")
+    .reverse()
+    .reduce((total, char, i) => (char === "O" ? total + i + 1 : total), 0);
+}
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -148,25 +71,59 @@ const rl = readline.createInterface({
 });
 
 rl.on("line", (line) => {
-  input1.data.push(line.split(""));
-  input2.data.push(line.split(""));
+  rowLength = line.length;
+  data += line;
 });
 
 rl.on("close", () => {
-  gravity(input1, Directions.North);
-  let totalLoad = northLoad(input1);
+  let totalLoad = toColumns().reduce(
+    (total, col) => total + load(gravity(col)),
+    0
+  );
 
   console.log(`Part 1 total load: ${totalLoad}`);
 
-  for (let i = 0; i < 1_000_000_000; i++) {
-    if (i % 1_000_000 === 0) {
-      console.log(`${i / 1_000_000_000}% done...`);
+  let cycled = toColumns();
+
+  const nodes: string[] = [];
+  const edges = new Map<number, number>();
+
+  const loops = 1_000_000_000;
+  let i = 0;
+  while (i < loops) {
+    const beforeNode = String(cycled);
+    let beforeId = nodes.indexOf(beforeNode);
+    if (beforeId === -1) {
+      beforeId = nodes.length;
+      nodes.push(beforeNode);
     }
 
-    cycle(input2);
+    cycled = cycle(cycled);
+
+    const afterNode = String(cycled);
+    let afterId = nodes.indexOf(afterNode);
+    if (afterId === -1) {
+      afterId = nodes.length;
+      nodes.push(afterNode);
+    }
+
+    edges.set(beforeId, afterId);
+
+    if (nodes.every((_, i) => edges.has(i))) {
+      break;
+    }
+
+    i++;
   }
 
-  totalLoad = northLoad(input2);
+  const loopsEvery = edges.size - edges.get(edges.size - 1)!;
+  const remaining = loops - i - 1;
+
+  for (let i = 0; i < remaining % loopsEvery; i++) {
+    cycled = cycle(cycled);
+  }
+
+  totalLoad = cycled.reduce((total, col) => total + load(col), 0);
 
   console.log(`Part 2 total load: ${totalLoad}`);
 });
