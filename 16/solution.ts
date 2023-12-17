@@ -22,10 +22,10 @@ function isDone(state: State): boolean {
   return state.activeBeams.length === 0;
 }
 
-function newState(): State {
+function newState(beam: Beam): State {
   return {
     visited: new Set(),
-    activeBeams: [{ line: 0, column: -1, direction: Direction.East }],
+    activeBeams: [beam],
   };
 }
 
@@ -151,11 +151,38 @@ rl.on("line", (line) => {
 });
 
 rl.on("close", () => {
-  const state = newState();
+  const state = newState({ line: 0, column: -1, direction: Direction.East });
 
   simulate(grid, state);
 
   const count = countBeamedSpaces(state);
 
   console.log(`Part 1 total spaces: ${count}`);
+
+  const maxLine = grid.length;
+  const maxColumn = grid[0].length;
+
+  const initialBeams: Beam[] = [];
+  for (let i = 0; i < maxLine; i++) {
+    initialBeams.push(
+      { line: i, column: -1, direction: Direction.East },
+      { line: i, column: maxColumn, direction: Direction.West }
+    );
+  }
+  for (let i = 0; i < maxColumn; i++) {
+    initialBeams.push(
+      { line: -1, column: i, direction: Direction.South },
+      { line: maxLine, column: i, direction: Direction.North }
+    );
+  }
+
+  const max = initialBeams
+    .map((beam) => {
+      const state = newState(beam);
+      simulate(grid, state);
+      return countBeamedSpaces(state);
+    })
+    .reduce((max, n) => Math.max(max, n));
+
+  console.log(`Part 2 max spaces: ${max}`);
 });
