@@ -42,13 +42,22 @@ function isBroadcast(module: Module): module is Broadcast {
   return module.type === ModuleType.Broadcast;
 }
 
-function press(modules: Map<string, Module>): { high: number; low: number } {
+function press(modules: Map<string, Module>): {
+  high: number;
+  low: number;
+  rxLow: number;
+} {
   let high = 0;
   let low = 0;
+  let rxLow = 0;
 
   const queue: { from: string; to: string; pulse: Pulse }[] = [];
 
   function send(from: string, to: string, pulse: Pulse) {
+    if (to === "rx" && pulse === Pulse.Low) {
+      rxLow++;
+    }
+
     if (modules.has(to)) {
       queue.push({ from, to, pulse });
     }
@@ -89,7 +98,7 @@ function press(modules: Map<string, Module>): { high: number; low: number } {
     }
   }
 
-  return { high, low };
+  return { high, low, rxLow };
 }
 
 const modules = new Map<string, Module>();
@@ -139,14 +148,27 @@ rl.on("close", () => {
     }
   }
 
+  const checkForRxLow = Array.from(modules.values()).some((module) =>
+    module.destinations.includes("rx")
+  );
   let low = 0;
   let high = 0;
+  let rxMin = 0;
 
-  for (let i = 0; i < 1_000; i++) {
+  for (let i = 0; ; i++) {
     const result = press(modules);
-    low += result.low;
-    high += result.high;
+    if (i < 1_000) {
+      low += result.low;
+      high += result.high;
+    } else if (!checkForRxLow) {
+      break;
+    }
+
+    if (result.rxLow > 0) {
+      rxMin = i + 1;
+    }
   }
 
   console.log(`Part 1 result: ${low * high}`);
+  console.log(`Part 2 result: ${rxMin}`);
 });
